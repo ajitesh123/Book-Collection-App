@@ -24,7 +24,16 @@ Then run following commands:
 $ npm install 
 $ serverless deploy -v
 ```
-## API Documentation
+## Rate limit
+There isn't a limit to the number of requests an user can send.
+
+## Register to get adequate for permissions
+- domain: 'fsdn2.auth0.com'
+- clientId: 'nygi6XG3sI6rsomJaKFHFm3DmMoI0Bzy'
+- callbackUrl: 'http://localhost:3000/callback'
+
+
+## API Endpoints
 
 Here is link to POSTAMN API Documentation - https://documenter.getpostman.com/view/8444799/Szf9X7pA?version=latest
 
