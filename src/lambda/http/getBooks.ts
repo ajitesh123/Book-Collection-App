@@ -1,28 +1,27 @@
 import 'source-map-support/register'
 
 import {APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler} from 'aws-lambda';
-import {deleteTodo} from "../../businessLogic/Todo";
+import {getBooks} from "../../businessLogic/Book";
 import { createLogger } from '../../utils/logger'
 
-const logger = createLogger('todos')
+const logger = createLogger('books')
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    // TODO: Remove a TODO item by id
     console.log("Processing Event ", event);
     const authorization = event.headers.Authorization;
     const split = authorization.split(' ');
     const jwtToken = split[1];
 
-    const todoId = event.pathParameters.todoId;
-
-    const deleteData = await deleteTodo(todoId, jwtToken);
-    logger.info("Deleted todo elements with ID: ${todoId}");
+    const books = await getBooks(jwtToken);
+    logger.info("Fetching list of Book Entry")
 
     return {
         statusCode: 200,
         headers: {
             "Access-Control-Allow-Origin": "*",
         },
-        body: deleteData,
+        body: JSON.stringify({
+            "books": books,
+        }),
     }
 };

@@ -2,24 +2,24 @@ import * as AWS from "aws-sdk";
 import * as AWSXRay from 'aws-xray-sdk'
 import {DocumentClient} from "aws-sdk/clients/dynamodb";
 import {Types} from 'aws-sdk/clients/s3';
-import {TodoItem} from "../models/TodoItem";
-import {TodoUpdate} from "../models/TodoUpdate";
+import {BookEntry} from "../models/book";
+import {BookUpdate} from "../models/bookUpdate";
 
 const XAWS = AWSXRay.captureAWS(AWS)
 
-export class ToDoAccess {
+export class BookAccess {
     constructor(
         private readonly docClient: DocumentClient = new XAWS.DynamoDB.DocumentClient(),
         private readonly s3Client: Types = new XAWS.S3({signatureVersion: 'v4'}),
-        private readonly todoTable = process.env.TODOS_TABLE,
+        private readonly booksTable = process.env.BOOKS_TABLE,
         private readonly BucketName = process.env.S3_BUCKET_NAME) {
     }
 
-    async getTodo(userId: string): Promise<TodoItem[]> {
-        console.log("Getting todo items");
+    async getBooks(userId: string): Promise<BookEntry[]> {
+        console.log("Getting list of books");
 
         const params = {
-            TableName: this.todoTable,
+            TableName: this.booksTable,
             KeyConditionExpression: "#userId = :userId",
             ExpressionAttributeNames: {
                 "#userId": "userId"
@@ -33,42 +33,42 @@ export class ToDoAccess {
         console.log(result);
         const items = result.Items;
 
-        return items as TodoItem[]
+        return items as BookEntry[]
     }
 
-    async createTodo(todoItem: TodoItem): Promise<TodoItem> {
-        console.log("Creating new todo");
+    async createBook(bookEntry: BookEntry): Promise<BookEntry> {
+        console.log("Creating book entry");
 
         const params = {
-            TableName: this.todoTable,
-            Item: todoItem,
+            TableName: this.booksTable,
+            Item: bookEntry,
         };
 
         const result = await this.docClient.put(params).promise();
         console.log(result);
 
-        return todoItem as TodoItem;
+        return bookEntry as BookEntry;
     }
 
-    async updateTodo(todoUpdate: TodoUpdate, todoId: string, userId: string): Promise<TodoUpdate> {
-        console.log("Updating todo");
+    async updateBook(bookUpdate: BookUpdate, bookId: string, userId: string): Promise<BookUpdate> {
+        console.log("Updating Book Entry");
 
         const params = {
-            TableName: this.todoTable,
+            TableName: this.booksTable,
             Key: {
                 "userId": userId,
-                "todoId": todoId
+                "bookId": bookId
             },
             UpdateExpression: "set #x = :x, #y = :y, #z = :z",
             ExpressionAttributeNames: {
                 "#x": "name",
-                "#y": "dueDate",
-                "#z": "done"
+                "#y": "summary",
+                "#z": "read"
             },
             ExpressionAttributeValues: {
-                ":x": todoUpdate['name'],
-                ":y": todoUpdate['dueDate'],
-                ":z": todoUpdate['done']
+                ":x": bookUpdate['name'],
+                ":y": bookUpdate['summary'],
+                ":z": bookUpdate['read']
             },
             ReturnValues: "ALL_NEW"
         };
@@ -77,17 +77,17 @@ export class ToDoAccess {
         console.log(result);
         const attributes = result.Attributes;
 
-        return attributes as TodoUpdate;
+        return attributes as BookUpdate;
     }
 
-    async deleteTodo(todoId: string, userId: string): Promise<string> {
-        console.log("Deleting todo");
+    async deleteBook(bookId: string, userId: string): Promise<string> {
+        console.log("Deleting book entry");
 
         const params = {
-            TableName: this.todoTable,
+            TableName: this.booksTable,
             Key: {
                 "userId": userId,
-                "todoId": todoId
+                "bookId": bookId
             },
         };
 
@@ -97,12 +97,12 @@ export class ToDoAccess {
         return "" as string;
     }
 
-    async generateUploadUrl(todoId: string): Promise<string> {
-        console.log("Generating update url");
+    async generateUploadUrl(bookId: string): Promise<string> {
+        console.log("Generating upload url");
 
         const url = this.s3Client.getSignedUrl('putObject', {
             Bucket: this.BucketName,
-            Key: todoId,
+            Key: bookId,
             Expires: 1000,
         });
         console.log(url);

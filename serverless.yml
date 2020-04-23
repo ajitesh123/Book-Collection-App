@@ -1,7 +1,7 @@
 org: ajiteshleo
 app: serverless-todo-app-app
 service:
-  name: serverless-todo-app
+  name: serverless-book-app
 
 plugins:
   - serverless-webpack
@@ -21,9 +21,9 @@ provider:
     apiGateway: true
 
   environment: 
-    PROJECT_NAME: AWS-serverless
-    TODOS_TABLE: Todos-abcde-${self:provider.stage}
-    S3_BUCKET_NAME: serverless-todos-abcde-${self:provider.stage}
+    PROJECT_NAME: AWS-serverless-book-app
+    BOOKS_TABLE: Book-${self:provider.stage}
+    S3_BUCKET_NAME: serverless-book-${self:provider.stage}
     INDEX_NAME: UserIdIndex
 
 custom:
@@ -31,33 +31,33 @@ custom:
     api:
       info:
         version: '1.0.0'
-        title: AWS-serverless-appl-todo-api
-        description: AWS-serverless-application-todo-api
+        title: AWS-serverless-appl-book-api
+        description: AWS-serverless-application-book-api
     models:
-      - name: CreateTodoRequest
+      - name: CreateBookRequest
         contentType: "application/json"
         schema:
           required:
             - name
-            - dueDate
+            - summary
           properties:
             name:
               type: string
             dueDate:
               type: string
-      - name: UpdateTodoRequest
+      - name: UpdateBookRequest
         contentType: "application/json"
         schema:
           required:
             - name
-            - dueDate
-            - done
+            - summary
+            - read
           properties:
             name:
               type: string
-            dueDate:
+            summary:
               type: string
-            done:
+            read:
               type: boolean
 
 functions:
@@ -65,21 +65,20 @@ functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
-  # TODO: Configure this function
-  GetTodos:
-    handler: src/lambda/http/getTodos.handler
+  GetBooks:
+    handler: src/lambda/http/getBooks.handler
     events:
       - http:
           method: get
-          path: todos
+          path: books
           cors: true
           authorizer: Auth
-    iamRoleStatementsName: ${self:provider.environment.PROJECT_NAME}-get-todo-role-${self:provider.stage}
+    iamRoleStatementsName: ${self:provider.environment.PROJECT_NAME}-get-books-role-${self:provider.stage}
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.BOOKS_TABLE}
       - Effect: Allow
         Action:
           - s3:*
@@ -91,27 +90,26 @@ functions:
         Resource:
           - '*'
 
-  # TODO: Configure this function
-  CreateTodo:
-    handler: src/lambda/http/createTodo.handler
+  CreateBook:
+    handler: src/lambda/http/createBook.handler
     events:
       - http:
           method: post
-          path: todos
+          path: books
           cors: true
           authorizer: Auth
           documentation:
-            summary: "Create a new todo item"
-            description: "Create a new todo item"
+            summary: "Create a new book entry"
+            description: "Create a new book entry"
             requestModels:
-              "application/json": CreateTodoRequest
+              "application/json": CreateBookRequest
           reqValidatorName: onlyBody
-    iamRoleStatementsName: ${self:provider.environment.PROJECT_NAME}-create-todo-role-${self:provider.stage}
+    iamRoleStatementsName: ${self:provider.environment.PROJECT_NAME}-create-book-role-${self:provider.stage}
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:PutItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.BOOKS_TABLE}
       - Effect: 'Allow' # xray permissions (required)
         Action:
           - 'xray:PutTraceSegments'
@@ -119,27 +117,26 @@ functions:
         Resource:
           - '*'
 
-  # TODO: Configure this function
-  UpdateTodo:
-    handler: src/lambda/http/updateTodo.handler
+  UpdateBook:
+    handler: src/lambda/http/updateBook.handler
     events:
       - http:
           method: patch
-          path: todos/{todoId}
+          path: books/{bookId}
           cors: true
           authorizer: Auth
           documentation:
-            summary: "Update a todo item"
-            description: "Update a todo item"
+            summary: "Update a book entry"
+            description: "Update a book entry"
             requestModels:
-              "application/json": UpdateTodoRequest
+              "application/json": UpdateBookRequest
           reqValidatorName: onlyBody
-    iamRoleStatementsName: ${self:provider.environment.PROJECT_NAME}-update-todo-role-${self:provider.stage}
+    iamRoleStatementsName: ${self:provider.environment.PROJECT_NAME}-update-book-role-${self:provider.stage}
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:UpdateItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.BOOKS_TABLE}
       - Effect: Allow
         Action:
           - s3:*
@@ -151,21 +148,20 @@ functions:
         Resource:
           - '*'
       
-  # TODO: Configure this function
-  DeleteTodo:
-    handler: src/lambda/http/deleteTodo.handler
+  DeleteBook:
+    handler: src/lambda/http/deleteBook.handler
     events:
       - http:
           method: delete
-          path: todos/{todoId}
+          path: books/{bookId}
           cors: true
           authorizer: Auth
-    iamRoleStatementsName: ${self:provider.environment.PROJECT_NAME}-delete-todo-role-${self:provider.stage}
+    iamRoleStatementsName: ${self:provider.environment.PROJECT_NAME}-delete-book-role-${self:provider.stage}
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:DeleteItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.BOOKS_TABLE}
       - Effect: 'Allow' # xray permissions (required)
         Action:
           - 'xray:PutTraceSegments'
@@ -173,13 +169,12 @@ functions:
         Resource:
           - '*'
 
-  # TODO: Configure this function
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
     events:
       - http:
           method: post
-          path: todos/{todoId}/attachment
+          path: books/{bookId}/attachment
           cors: true
           authorizer: Auth
     iamRoleStatementsName: ${self:provider.environment.PROJECT_NAME}-s3-upload-role-${self:provider.stage}
@@ -197,8 +192,7 @@ functions:
 
 resources:
   Resources:
-    # TODO: Add any necessary AWS resources
-    TodosTable:
+    BooksTable:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
@@ -206,15 +200,15 @@ resources:
             AttributeType: S
           - AttributeName: createdAt
             AttributeType: S
-          - AttributeName: todoId
+          - AttributeName: bookId
             AttributeType: S
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
-          - AttributeName: todoId
+          - AttributeName: bookId
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
-        TableName: ${self:provider.environment.TODOS_TABLE}
+        TableName: ${self:provider.environment.BOOKS_TABLE}
         LocalSecondaryIndexes:
           - IndexName: ${self:provider.environment.INDEX_NAME}
             KeySchema:

@@ -1,19 +1,18 @@
 import 'source-map-support/register'
 
 import {APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler} from 'aws-lambda'
-import {generateUploadUrl} from "../../businessLogic/Todo";
+import {generateUploadUrl} from "../../businessLogic/Book";
 import { createLogger } from '../../utils/logger'
 
-const logger = createLogger('todos')
+const logger = createLogger('books')
 
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    // TODO: Return a presigned URL to upload a file for a TODO item with the provided id
     console.log("Processing Event ", event);
-    const todoId = event.pathParameters.todoId;
+    const bookId = event.pathParameters.bookId;
 
-    const URL = await generateUploadUrl(todoId);
-    logger.info("Upload URL generated for item with id ${todoId}")
+    const URL = await generateUploadUrl(bookId);
+    logger.info("Upload URL generated for book entry with id ${bookId}")
 
     return {
         statusCode: 200,

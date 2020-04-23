@@ -1,24 +1,23 @@
 import 'source-map-support/register'
 
 import {APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult} from 'aws-lambda'
-import {UpdateTodoRequest} from '../../requests/UpdateTodoRequest'
-import {updateTodo} from "../../businessLogic/Todo";
+import {UpdateBookRequest} from '../../requests/UpdateBookRequest'
+import {updateBook} from "../../businessLogic/Book";
 import { createLogger } from '../../utils/logger'
 
-const logger = createLogger('todos')
+const logger = createLogger('books')
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    // TODO: Update a TODO item with the provided id using values in the "updatedTodo" object
     console.log("Processing Event ", event);
     const authorization = event.headers.Authorization;
     const split = authorization.split(' ');
     const jwtToken = split[1];
 
-    const todoId = event.pathParameters.todoId;
-    const updatedTodo: UpdateTodoRequest = JSON.parse(event.body);
+    const bookId = event.pathParameters.todoId;
+    const updatedBook: UpdateBookRequest = JSON.parse(event.body);
 
-    const todoItem = await updateTodo(updatedTodo, todoId, jwtToken);
-    logger.info("Updated todo elements with ID: ${todoId}");
+    const bookEntry = await updateBook(updatedBook, bookId, jwtToken);
+    logger.info("Updated book entry with ID: ${bookId}");
 
     return {
         statusCode: 200,
@@ -27,7 +26,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
             'Access-Control-Allow-Credentials': true
         },
         body: JSON.stringify({
-            "item": todoItem
+            "bookEntry": bookEntry
         }),
     }
 };
